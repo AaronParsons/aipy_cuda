@@ -4,16 +4,14 @@
 int cuda_add(int*, int*, int*, int);
 
 PyObject *wrap_cuda_add(PyObject *self, PyObject *args){
-	import_array()
 	PyArrayObject *a, *b, *c;
 	PyArrayObject *a_cast, *b_cast;
 	int N;
-	static char *kwlist[] = {"a", "b", NULL};
 	if(!PyArg_ParseTuple(args, "O!O!", &PyArray_Type, &a, &PyArray_Type, &b)){
 	return NULL;
 	}
-	N = Py_ArraySize(a);
-	if (Py_ArraySize(b) != N){ //if the 2 arrays are not the same length, raise an error
+	N = PyArray_Size(a);
+	if (PyArray_Size(b) != N){ //if the 2 arrays are not the same length, raise an error
 		PyErr_Format(PyExc_ValueError, "a.size != b.size");
 		return NULL;
 	}
@@ -26,7 +24,7 @@ PyObject *wrap_cuda_add(PyObject *self, PyObject *args){
 	}
 	// cast input arrays to ensure integer type, raise exception if either cast fails
 	if (PyArray_CastTo(a_cast, a) || PyArray_CastTo(b_cast,b)) {
-		PyErr_Format(PyExc_ValueError, "failed to cast intputs to integers");
+		PyErr_Format(PyExc_ValueError, "failed to cast inputs to integers");
 		return NULL;
 	}
 	// call third party function on the data inside numpy arrays
