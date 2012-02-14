@@ -8,9 +8,8 @@ __global__ void add( int *a, int *b, int *c, int N) {
 		c[tid] = a[tid] +b[tid];
 }
 
-int cuda_add(int* a, int* b, int N){
+int cuda_add(int* a, int* b, int *c, int N){
 	int *dev_a, *dev_b, *dev_c;
-	int c[N];
 
 	// Allocate memory on the GPU
 	cudaMalloc((void**) &dev_a, N*sizeof(int));
