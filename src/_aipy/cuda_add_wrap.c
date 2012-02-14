@@ -6,7 +6,7 @@ int cuda_add(int*, int*, int*, int);
 PyObject *wrap_cuda_add(PyObject *self, PyObject *args){
 	PyArrayObject *a, *b, *c;
 	PyArrayObject *a_cast, *b_cast;
-	int N;
+	npy_intp N;
 	if(!PyArg_ParseTuple(args, "O!O!", &PyArray_Type, &a, &PyArray_Type, &b)){
 	return NULL;
 	}
@@ -15,9 +15,9 @@ PyObject *wrap_cuda_add(PyObject *self, PyObject *args){
 		PyErr_Format(PyExc_ValueError, "a.size != b.size");
 		return NULL;
 	}
-	c = PyArray_SimpleNew(PyArray_NDIM(a), PyArray_DIMS(a), NPY_INT);
-	a_cast = PyArray_SimpleNew(PyArray_NDIM(a), PyArray_DIMS(a), NPY_INT);
-	b_cast = PyArray_SimpleNew(PyArray_NDIM(a), PyArray_DIMS(a), NPY_INT);
+	c = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(a), PyArray_DIMS(a), NPY_INT);
+	a_cast = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(a), PyArray_DIMS(a), NPY_INT);
+	b_cast = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(a), PyArray_DIMS(a), NPY_INT);
 	if (c == NULL || a_cast == NULL || b_cast == NULL) { // check allocation success
 		PyErr_Format(PyExc_MemoryError, "failed to allocate buffer");
 		return NULL;
