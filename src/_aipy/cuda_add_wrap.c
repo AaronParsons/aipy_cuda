@@ -10,8 +10,8 @@ PyObject *wrap_cuda_add(PyObject *self, PyObject *args){
 	if(!PyArg_ParseTuple(args, "O!O!", &PyArray_Type, &a, &PyArray_Type, &b)){
 	return NULL;
 	}
-	N = PyArray_Size(a);
-	if (PyArray_Size(b) != N){ //if the 2 arrays are not the same length, raise an error
+	N = PyArray_Size((PyObject *)a);
+	if (PyArray_Size((PyObject *)b) != N){ //if the 2 arrays are not the same length, raise an error
 		PyErr_Format(PyExc_ValueError, "a.size != b.size");
 		return NULL;
 	}
@@ -42,7 +42,7 @@ static PyMethodDef NumpyextMethods[] = {
 	{"cuda_add",
 		(PyCFunction)wrap_cuda_add,
 		METH_VARARGS,
-		"cuda_add(a,b), return a+b for numpy arrays"
+		"cuda_add(a,b), return a+b elementwise for numpy arrays"
 	},
 	{NULL, NULL}
 	};
