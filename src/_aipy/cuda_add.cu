@@ -1,5 +1,6 @@
-#include <stdio.h>
 #include <cuda.h>
+#include <cuda_runtime_api.h>
+#include "cuda_add.h"
 
 
 __global__ void add( int *a, int *b, int *c, int N) {

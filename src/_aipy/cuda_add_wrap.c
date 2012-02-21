@@ -1,7 +1,7 @@
 #include <Python.h>
+#include "cuda_add.h"
+#include <cuda_runtime_api.h>
 #include "numpy/arrayobject.h"
-
-int cuda_add(int*, int*, int*, int);
 
 PyObject *wrap_cuda_add(PyObject *self, PyObject *args){
 	PyArrayObject *a, *b, *c;
@@ -39,15 +39,13 @@ PyObject *wrap_cuda_add(PyObject *self, PyObject *args){
 	}
 
 static PyMethodDef NumpyextMethods[] = {
-	{"cuda_add",
-		(PyCFunction)wrap_cuda_add,
-		METH_VARARGS,
+	{"cuda_add", (PyCFunction)wrap_cuda_add, METH_VARARGS,
 		"cuda_add(a,b), return a+b elementwise for numpy arrays"
 	},
 	{NULL, NULL}
 	};
 	
-PyMODINIT_FUNC init_numpyext(void){
-	(void) Py_InitModule("_numpyext", NumpyextMethods);
+PyMODINIT_FUNC init_aipy(void){
+	(void) Py_InitModule("_aipy", NumpyextMethods);
 	import_array();
 };
