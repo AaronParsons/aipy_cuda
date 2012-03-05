@@ -4,38 +4,41 @@
 #include "cuda_add.h"
 
 
-__global__ void find_vis( float *baseline, float *src_dir, float *src_int, float *freqs, int N_fq, int N_src, float *re_part, float *im_part) {
-	int tid = blockIdx.x;
-    int c = 3*10**8;
-    if (tid < N_fq){
+__global__ void find_vis( float *baseline, float *src_dir, float *src_int, float *src_index, float *freqs, float* mfreqs, int N_fq, int N_src, float *vis_arr) {
+	//Inputs: Baseline is length 3 vector in nanoseconds, src_dir is N_src*3 array, src_int is an N_src array, src_index is a N_src array, freqs is an N_fq array of frequencies in GHz, mfreqs is an N_src array
+    //Outputs: re_part and im_part are N_fq arrays holding the computed visibility.
+    int tid = blockIdx.x;
+    if (tid < N_fq){ //Each thread handles the calculation of visibility for one frequency
         fq = freqs[tid];
+        vis_arr[2*tid] = 0;
+        vis_arr[2*tid+1] = 0;
         for(int i =0;i<N_src;i++){//iterate over all sources
             float dot = 0;
             for (int j = 0;j<3;j++){//compute the dot product of baseline and source direction
-                   dot += src_dir[i][j]*baseline[j];
-                }
-            coeff = src_int[i]*(fq/mfreq)**src_index[i];
-            re_part = coeff*cos(-2*pi*fq*dot/c);
-            im_part = coeff*sin(-2*pi*fq*dot/c);
+                   dot += src_dir[3*i+j] * baseline[j];
             }
+            coeff = src_int[i]*(fq/mfreqs[i])**src_index[i];
+            vis_arr[2*tid] += coeff*cos(-2*pi*fq*dot);
+            vis_arr[2*tid+1] += coeff*sin(-2*pi*fq*dot);
+        }
     }
 }
 
-int *cuda_add(float *baseline, float *src_dir, float *src_int, 
-            float *freqs, float *vis_arr,
+int vis_sim(float *baseline, float *src_dir, float *src_int, float *src_index,
+            float *freqs, float *mfreqs, float *vis_arr,
             int N_fq, int N_src){
-    float *re_part, *im_part;
-	float *dev_baseline, *dev_src_dir, *dev_src_int,*dev_freqs,
-          *dev_re_part, *dev_im_part;
+	float *dev_baseline, *dev_src_dir, *dev_src_int, *dev_src_index, *dev_freqs, *dev_mfreqs,
+          *dev_vis_arr;
     int dev_N_fq, dev_N_src;
 
-	// Allocate memory on the GPU
+	// Allocate memory on the GPU, do we need to check for success on cudaMalloc?
 	cudaMalloc((void**) &dev_baseline,  3*sizeof(float));
 	cudaMalloc((void**) &dev_src_dir,   3*N_src*sizeof(float));
 	cudaMalloc((void**) &dev_src_int,   N_src*sizeof(float));
-	cudaMalloc((void**) &dev_src_freqs, N_fq*sizeof(float));
-	cudaMalloc((void**) &dev_re_part,   N_fq*sizeof(float));
-	cudaMalloc((void**) &dev_im_part,   N_fq*sizeof(float));	    
+    cudaMalloc((void**) &dev_src_index, N_src*sizeof(float));
+	cudaMalloc((void**) &dev_freqs,     N_fq*sizeof(float));
+    cudaMalloc((void**) &dev_mfreqs,    N_src*sizeof(float));
+	cudaMalloc((void**) &dev_vis_arr,   2 * N_fq*sizeof(float));	    
     cudaMalloc((void**) &dev_N_fq,      sizeof(int));
 	cudaMalloc((void**) &dev_N_src,     sizeof(int));
 	
@@ -46,24 +49,22 @@ int *cuda_add(float *baseline, float *src_dir, float *src_int,
                 cudaMemcpyHostToDevice);    
     cudaMemcpy(dev_src_int,   src_int,   N_src*sizeof(float),         
                 cudaMemcpyHostToDevice);    
-    cudaMemcpy(dev_src_freqs, src_freqs, N_fq*sizeof(float),         
+    cudaMemcpy(dev_src_index, src_index, N_src*sizeof(float),
                 cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_re_part,   re_part,   N_fq*sizeof(float),         
+    cudaMemcpy(dev_freqs, freqs, N_fq*sizeof(float),         
                 cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_im_part,   im_part,   N_fq*sizeof(float),         
+    cudaMemcpy(dev_mfreqs, mfreqs, N_src*sizeof(float),
                 cudaMemcpyHostToDevice);
     cudaMemcpy(dev_N_fq,      N_fq,      sizeof(int),  cudaMemcpyHostToDevice);
     cudaMemcpy(dev_N_src,     N_src,     sizeof(int)), cudaMemcpyHostToDevice);
 
 
-	find_vis<<<N_fq,1>>>(baseline, src_dir, src_int, freqs, 
-                        N_fq, N_src, 
-                        re_part, im_part);
+	find_vis<<<N_fq,1>>>(dev_baseline, dev_src_dir, dev_src_int, dev_src_index, dev_freqs, dev_mfreqs, 
+                        dev_N_fq, dev_N_src, 
+                        dev_vis_arr);
 	
 	// copy the array back
-	cudaMemcpy(re_part, dev_re_part, N_fq * sizeof(float), 
-                cudaMemcpyDeviceToHost);
-    cudaMemcpy(im_part, dev_im_part, N_fq * sizeof(float),
+	cudaMemcpy(vis_arr, dev_vis_arr, 2*N_fq * sizeof(float), 
                 cudaMemcpyDeviceToHost);
 	
     //frees memory allocated on GPU
@@ -71,18 +72,13 @@ int *cuda_add(float *baseline, float *src_dir, float *src_int,
     cudaFree(dev_baseline);
     cudaFree(dev_src_dir);
     cudaFree(dev_src_int);
+    cudaFree(dev_src_index);
     cudaFree(dev_src_freqs);
-    cudaFree(dev_re_part);
-    cudaFree(dev_im_part);
+    cudaFree(dev_src_mfreqs);
+    cudaFree(dev_vis_arr);
     cudaFree(dev_N_fq);
     cudaFree(dev_N_src);
     
-    //interleave re_part and im_part in the output array
-    for(int i = 0;i<N_fq;i++){
-        *vis_arr[2*i] = re_part[i];
-        *vis_arr[2*i+1] = im_part[i];
-        }
 
-	return 1;
+	return 0;
 }
-/

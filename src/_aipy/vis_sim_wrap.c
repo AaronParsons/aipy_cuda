@@ -32,10 +32,10 @@ PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
         }
 
     if (!((d0 == N_src) && (d1 == (npy_intp) 3))){
-        PyErr_format(PyExc_ValueError, "src_dir must have 0th dimension = the length of src_int, and 1st dimension = 3");
+        PyErr_Format(PyExc_ValueError, "src_dir must have 0th dimension = the length of src_int, and 1st dimension = 3");
         return NULL;
         }
-
+    //XXX Instead of casting, check the type of the arrays
 	vis_array     = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(freqs),    PyArray_DIMS(freqs),    NPY_CFLOAT);
 	baseline_cast = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(baseline), PyArray_DIMS(baseline), NPY_FLOAT);
     src_dir_cast  = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(src_dir),  PyArray_DIMS(src_dir),  NPY_FLOAT);
@@ -47,17 +47,17 @@ PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
 		PyErr_Format(PyExc_MemoryError, "failed to allocate buffer");
 		return NULL;
 	}
-	// cast input arrays to ensure integer type, raise exception if either cast fails
+	// cast input arrays to ensure float type, raise exception if either cast fails
 	if (PyArray_CastTo(baseline_cast, baseline) || PyArray_CastTo(src_dir_cast, src_dir) || PyArray_CastTo(src_int_cast, src_int) || PyArray_CastTo(freqs_cast, freqs)) {
 		PyErr_Format(PyExc_ValueError, "failed to cast inputs to floats");
 		return NULL;
 	}
 	// call third party function on the data inside numpy arrays
 	cuda_add(
-	(float *)PyArray_DATA(baseline_cast), // access pointer to data buffer, cast as integers
-	(float *)PyArray_DATA(src_dir_cast),
-    (float *)PyArray_DATA(src_int_cast),
-    (float *)PyArray_DATA(freqs_cast),
+	(float *)PyArray_DATA(baseline), // access pointer to data buffer, cast as floats
+	(float *)PyArray_DATA(src_dir),
+    (float *)PyArray_DATA(src_int),
+    (float *)PyArray_DATA(freqs),
 	(float *)PyArray_DATA(vis_array), 
     N_fq, N_src // pass pointer to sum buffer to hold result
 	);
