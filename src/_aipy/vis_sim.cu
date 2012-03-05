@@ -1,7 +1,7 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <math.h>
-#include "cuda_add.h"
+#include "vis_sim.h"
 
 
 __global__ void find_vis( float *baseline, float *src_dir, float *src_int, float *src_index, float *freqs, float* mfreqs, int N_fq, int N_src, float *vis_arr) {
