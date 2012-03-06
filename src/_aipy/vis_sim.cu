@@ -1,7 +1,7 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
-#define _USE_MATH_DEFINES
-#include <math.h>
+//#define _USE_MATH_DEFINES
+//#include <math.h>
 #include "vis_sim.h"
 
 
@@ -10,21 +10,24 @@ __global__ void find_vis( float *baseline, float *src_dir, float *src_int, float
     //Outputs: re_part and im_part are N_fq arrays holding the computed visibility.
     int N_fq = *N_fq_p;
     int N_src = *N_src_p;
-    float coeff;
+    int i, j;
+    float coeff, dot, fq;
+    float vis_r=0, vis_i=0;
     int tid = blockIdx.x;
     if (tid < N_fq){ //Each thread handles the calculation of visibility for one frequency
-        float fq = freqs[tid];
-        vis_arr[2*tid] = 0;
-        vis_arr[2*tid+1] = 0;
-        for(int i =0;i<N_src;i++){//iterate over all sources
-            float dot = 0;
-            for (int j = 0;j<3;j++){//compute the dot product of baseline and source direction
+        fq = freqs[tid];
+        for(i=0 ; i < N_src ; i++){//iterate over all sources
+            dot = 0;
+            for (j=0 ; j < 3 ; j++) {//compute the dot product of baseline and source direction
                    dot += src_dir[3*i+j] * baseline[j];
             }
-            coeff = src_int[i]*pow(fq/mfreqs[i],src_index[i]);
-            vis_arr[2*tid] += coeff*cos(-2*M_PI*fq*dot);
-            vis_arr[2*tid+1] += coeff*sin(-2*M_PI*fq*dot);
+            dot *= -2 * CL_M_PI_F;
+            coeff = src_int[i] * powf(fq/mfreqs[i], src_index[i]);
+            vis_r += coeff * cosf(fq*dot);
+            vis_i += coeff * sinf(fq*dot);
         }
+        vis_arr[2*tid] = vis_r;
+        vis_arr[2*tid+1] = vis_i;
     }
 }
 

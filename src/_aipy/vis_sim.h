@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define  CL_M_PI_F          3.14159274101257f
+
 int vis_sim(float *, float *, float *, float *,
             float *, float *, float *,
             int, int);

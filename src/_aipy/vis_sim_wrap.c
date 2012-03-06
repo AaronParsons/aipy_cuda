@@ -6,7 +6,7 @@
 PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
 	PyArrayObject *baseline, *src_dir, *src_int, *src_index, *freqs, *mfreqs;
 	PyArrayObject *vis_array;
-    PyArrayObject *baseline_cast, *src_dir_cast, *src_int_cast, *src_index_cast, *freqs_cast, *mfreqs_cast;
+    //PyArrayObject *baseline_cast, *src_dir_cast, *src_int_cast, *src_index_cast, *freqs_cast, *mfreqs_cast;
 	npy_intp N_fq, N_src, d0, d1;
 
 	if(!PyArg_ParseTuple(args, "O!O!O!O!O!O!", &PyArray_Type, &baseline, &PyArray_Type, &src_dir, &PyArray_Type, &src_int, &PyArray_Type, &src_index, 						   &PyArray_Type, &freqs, &PyArray_Type, &mfreqs)){
@@ -51,24 +51,24 @@ PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
 
     //XXX Instead of casting, check the type of the arrays
 	vis_array     = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(freqs),    PyArray_DIMS(freqs),    NPY_CFLOAT);
-	baseline_cast = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(baseline), PyArray_DIMS(baseline), NPY_FLOAT);
-    src_dir_cast  = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(src_dir),  PyArray_DIMS(src_dir),  NPY_FLOAT);
-    src_int_cast  = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(src_int),  PyArray_DIMS(src_int),  NPY_FLOAT);
-    src_index_cast= (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(src_index),PyArray_DIMS(src_int),  NPY_FLOAT);
-	freqs_cast    = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(freqs),    PyArray_DIMS(freqs),    NPY_FLOAT);
-	mfreqs_cast   = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(mfreqs),    PyArray_DIMS(mfreqs),    NPY_FLOAT);
+	//baseline_cast = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(baseline), PyArray_DIMS(baseline), NPY_FLOAT);
+    //src_dir_cast  = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(src_dir),  PyArray_DIMS(src_dir),  NPY_FLOAT);
+    //src_int_cast  = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(src_int),  PyArray_DIMS(src_int),  NPY_FLOAT);
+    //src_index_cast= (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(src_index),PyArray_DIMS(src_int),  NPY_FLOAT);
+	//freqs_cast    = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(freqs),    PyArray_DIMS(freqs),    NPY_FLOAT);
+	//mfreqs_cast   = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(mfreqs),    PyArray_DIMS(mfreqs),    NPY_FLOAT);
     
-	// check allocation success
-	if (vis_array == NULL || baseline_cast == NULL || src_dir_cast == NULL || src_int_cast == NULL || src_index_cast == NULL 
-        || freqs_cast == NULL|| mfreqs_cast == NULL) { 
-		PyErr_Format(PyExc_MemoryError, "failed to allocate buffer");
-		return NULL;
-	}
-	// cast input arrays to ensure float type, raise exception if either cast fails
-	if (PyArray_CastTo(baseline_cast, baseline) || PyArray_CastTo(src_dir_cast, src_dir) || PyArray_CastTo(src_int_cast, src_int) ||PyArray_CastTo(src_index_cast, src_index) || PyArray_CastTo(freqs_cast, freqs) || PyArray_CastTo(mfreqs_cast, mfreqs)){
-		PyErr_Format(PyExc_ValueError, "failed to cast inputs to floats");
-		return NULL;
-	}
+	//// check allocation success
+	//if (vis_array == NULL || baseline_cast == NULL || src_dir_cast == NULL || src_int_cast == NULL || src_index_cast == NULL 
+    //    || freqs_cast == NULL|| mfreqs_cast == NULL) { 
+	//	PyErr_Format(PyExc_MemoryError, "failed to allocate buffer");
+	//	return NULL;
+	//}
+	//// cast input arrays to ensure float type, raise exception if either cast fails
+	//if (PyArray_CastTo(baseline_cast, baseline) || PyArray_CastTo(src_dir_cast, src_dir) || PyArray_CastTo(src_int_cast, src_int) ||PyArray_CastTo(src_index_cast, src_index) || PyArray_CastTo(freqs_cast, freqs) || PyArray_CastTo(mfreqs_cast, mfreqs)){
+	//	PyErr_Format(PyExc_ValueError, "failed to cast inputs to floats");
+	//	return NULL;
+	//}
 	// call third party function on the data inside numpy arrays
 	vis_sim(
 	(float *)PyArray_DATA(baseline), // access pointer to data buffer, cast as floats
@@ -80,12 +80,12 @@ PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
 	(float *)PyArray_DATA(vis_array), 
     N_fq, N_src // pass pointer to sum buffer to hold result
 	);
-	Py_DECREF(baseline_cast); // we created new arrays that are no longer needed
-	Py_DECREF(src_dir_cast); // must decref them to prevent memory leak
-    Py_DECREF(src_int_cast);
-    Py_DECREF(src_index_cast);
-    Py_DECREF(freqs_cast);
-    Py_DECREF(mfreqs_cast);
+	//Py_DECREF(baseline_cast); // we created new arrays that are no longer needed
+	//Py_DECREF(src_dir_cast); // must decref them to prevent memory leak
+    //Py_DECREF(src_int_cast);
+    //Py_DECREF(src_index_cast);
+    //Py_DECREF(freqs_cast);
+    //Py_DECREF(mfreqs_cast);
 	return PyArray_Return(vis_array);
 	}
 
