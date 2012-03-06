@@ -1,7 +1,7 @@
 #include <Python.h>
-#include "cuda_add.h"
 #include <cuda_runtime_api.h>
 #include "numpy/arrayobject.h"
+#include "cuda_add.h"
 
 PyObject *wrap_cuda_add(PyObject *self, PyObject *args){
 	PyArrayObject *a, *b, *c;
@@ -45,7 +45,7 @@ static PyMethodDef NumpyextMethods[] = {
 	{NULL, NULL}
 	};
 	
-PyMODINIT_FUNC init_aipy(void){
+/*PyMODINIT_FUNC init_aipy(void){
 	(void) Py_InitModule("_aipy", NumpyextMethods);
 	import_array();
-};
+};*/

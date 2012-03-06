@@ -14,4 +14,3 @@ int cuda_add(int *, int *, int *, int);
 #endif
 
 #endif /* _CUDA_ADD_H_ */
-

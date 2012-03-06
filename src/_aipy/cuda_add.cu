@@ -1,7 +1,7 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
+#include <stdio.h>
 #include "cuda_add.h"
-
 
 __global__ void add( int *a, int *b, int *c, int N) {
 	int tid = blockIdx.x;
@@ -27,6 +27,11 @@ int cuda_add(int* a, int* b, int *c, int N){
 	// copy the array back
 	cudaMemcpy(c, dev_c, N * sizeof(int), cudaMemcpyDeviceToHost);
 	
+    // Free memory allocated on device
+    cudaFree (dev_a);
+    cudaFree (dev_b);
+    cudaFree (dev_c);
+    
 	for (int i=0;i<N;i++){
 		printf("%d + %d = %d\n", a[i], b[i], c[i]);
 		}
