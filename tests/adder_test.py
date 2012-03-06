@@ -1,4 +1,4 @@
-import aipy_cuda._aipy as a
+import aipy_cuda.adder as a
 import numpy as n, unittest
 
 class Test_Aipy(unittest.TestCase):

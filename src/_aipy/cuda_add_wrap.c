@@ -45,7 +45,7 @@ static PyMethodDef NumpyextMethods[] = {
 	{NULL, NULL}
 	};
 	
-/*PyMODINIT_FUNC init_aipy(void){
-	(void) Py_InitModule("_aipy", NumpyextMethods);
+PyMODINIT_FUNC initadder(void){
+	(void) Py_InitModule("adder", NumpyextMethods);
 	import_array();
-};*/
+};

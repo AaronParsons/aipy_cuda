@@ -91,7 +91,7 @@ PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
 
 static PyMethodDef VissimMethods[] = {
 	{"vis_sim", (PyCFunction)wrap_vis_sim, METH_VARARGS,
-		"vis_sim(baseline, src_dir, src_int, src_index, freqs, mfreqs) Calculates visibilities."
+		"vis_sim(baseline, src_dir, src_int, src_index, freqs, mfreqs)\nCalculates visibilities.  All inputs are numpy float32 arrays"
 	},
 	{NULL, NULL}
 	};
