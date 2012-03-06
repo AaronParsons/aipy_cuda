@@ -5,9 +5,11 @@
 #include "vis_sim.h"
 
 
-__global__ void find_vis( float *baseline, float *src_dir, float *src_int, float *src_index, float *freqs, float* mfreqs, int N_fq, int N_src, float *vis_arr) {
+__global__ void find_vis( float *baseline, float *src_dir, float *src_int, float *src_index, float *freqs, float* mfreqs, int *N_fq_p, int *N_src_p, float *vis_arr) {
 	//Inputs: Baseline is length 3 vector in nanoseconds, src_dir is N_src*3 array, src_int is an N_src array, src_index is a N_src array, freqs is an N_fq array of frequencies in GHz, mfreqs is an N_src array
     //Outputs: re_part and im_part are N_fq arrays holding the computed visibility.
+    int N_fq = *N_fq_p;
+    int N_src = *N_src_p;
     float coeff;
     int tid = blockIdx.x;
     if (tid < N_fq){ //Each thread handles the calculation of visibility for one frequency
@@ -62,7 +64,7 @@ int vis_sim(float *baseline, float *src_dir, float *src_int, float *src_index,
 
 
 	find_vis<<<N_fq,1>>>(dev_baseline, dev_src_dir, dev_src_int, dev_src_index, dev_freqs, dev_mfreqs, 
-                        *dev_N_fq, *dev_N_src, 
+                        dev_N_fq, dev_N_src, 
                         dev_vis_arr);
 	
 	// copy the array back
