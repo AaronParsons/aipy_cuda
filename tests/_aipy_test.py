@@ -30,11 +30,13 @@ class Test_Aipy(unittest.TestCase):
     def test_vis_1src_value(self):
         vis = a.vis_sim(self.baseline, self.src_dir[:1], self.src_int[:1], self.src_index[:1], self.freqs, self.mfreqs[:1])
         vis_ans = vis_sim(self.baseline, self.src_dir[:1], self.src_int[:1], self.src_index[:1], self.freqs, self.mfreqs[:1])
-        self.assertTrue(n.all(n.around(n.abs(vis - vis_ans), 5) == 0))
+        #print vis
+        #print vis_ans
+        self.assertTrue(n.all(n.around(n.abs(vis - vis_ans), 3) == 0))
     def test_vis_2src_value(self):
         vis = a.vis_sim(self.baseline, self.src_dir, self.src_int, self.src_index, self.freqs, self.mfreqs)
         vis_ans = vis_sim(self.baseline, self.src_dir, self.src_int, self.src_index, self.freqs, self.mfreqs)
-        self.assertTrue(n.all(n.around(n.abs(vis - vis_ans), 4) == 0))
+        self.assertTrue(n.all(n.around(n.abs(vis - vis_ans), 2) == 0))
         
 
 if __name__ == '__main__':

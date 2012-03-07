@@ -29,10 +29,6 @@ def vis_sim(baseline, src_dir, src_int, src_index, freqs, mfreq):
     phs = n.exp(-2j*n.pi * freqs * bl)
     return n.sum(amp * phs, axis=0)
 
-opts.nfreq = 1024
-opts.nsrc = 100
-opts.nsim = 100
-
 baseline = n.array([100, 100, 0], dtype=n.float32)
 src_dir = n.array([[1.,0,0]] * opts.nsrc, dtype=n.float32)
 src_int = n.array([10.] * opts.nsrc, dtype=n.float32)
