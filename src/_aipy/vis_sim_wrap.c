@@ -4,12 +4,13 @@
 #include "numpy/arrayobject.h"
 
 PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
-	PyArrayObject *baseline, *src_dir, *src_int, *src_index, *freqs, *mfreqs;
+	PyArrayObject *baseline, *src_dir, *src_int, *src_index, *freqs, *mfreqs, *beam_arr;
 	PyArrayObject *vis_array;
     //PyArrayObject *baseline_cast, *src_dir_cast, *src_int_cast, *src_index_cast, *freqs_cast, *mfreqs_cast;
 	npy_intp N_fq, N_src, d0, d1;
+    int l, b;
 
-	if(!PyArg_ParseTuple(args, "O!O!O!O!O!O!", &PyArray_Type, &baseline, &PyArray_Type, &src_dir, &PyArray_Type, &src_int, &PyArray_Type, &src_index, 						   &PyArray_Type, &freqs, &PyArray_Type, &mfreqs)){
+	if(!PyArg_ParseTuple(args, "O!O!O!O!O!O!O!ii", &PyArray_Type, &baseline, &PyArray_Type, &src_dir, &PyArray_Type, &src_int, &PyArray_Type, &src_index, 						   &PyArray_Type, &freqs, &PyArray_Type, &mfreqs, &PyArray_Type, &beam_arr, &l, &b)){
 	return NULL;
 	}
 
@@ -49,6 +50,11 @@ PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
         return NULL;
         }
 
+    //Check that the length of beam_arr is equal to l*b*N_fq
+    if !(l*b*N_fq == PyArraySize((PyObject *)beam_arr)){
+        PyErr_Format(PyExc_ValueError, "beam_arr dimensions do not match of l, b, and N_fq");
+        }
+
     //XXX Instead of casting, check the type of the arrays
 	vis_array     = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(freqs),    PyArray_DIMS(freqs),    NPY_CFLOAT);
 	//baseline_cast = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(baseline), PyArray_DIMS(baseline), NPY_FLOAT);
@@ -78,7 +84,8 @@ PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
     (float *)PyArray_DATA(freqs),
     (float *)PyArray_DATA(mfreqs),
 	(float *)PyArray_DATA(vis_array), 
-    N_fq, N_src // pass pointer to sum buffer to hold result
+    (float *)PyArray_DATA(beam_arr),
+    l, b, N_fq, N_src // pass pointer to sum buffer to hold result
 	);
 	//Py_DECREF(baseline_cast); // we created new arrays that are no longer needed
 	//Py_DECREF(src_dir_cast); // must decref them to prevent memory leak

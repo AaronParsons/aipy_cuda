@@ -11,7 +11,7 @@ extern "C" {
 
 int vis_sim(float *, float *, float *, float *,
             float *, float *, float *,
-            int, int);
+            int, int, int, int);
 
 #ifdef __cplusplus
 }

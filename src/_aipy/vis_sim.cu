@@ -5,6 +5,7 @@
 //#include <math.h>
 #include "vis_sim.h"
 
+texture<float, 3, cudaReadModeNormalizedFloat> tex;
 
 __global__ void find_vis( float *baseline, float *src_dir, float *src_int, float *src_index, float *freqs, float* mfreqs, int *N_fq_p, int *N_src_p, float *vis_arr) {
 	//Inputs: Baseline is length 3 vector in nanoseconds, src_dir is N_src*3 array, src_int is an N_src array, src_index is a N_src array, freqs is an N_fq array of frequencies in GHz, mfreqs is an N_src array
@@ -39,22 +40,28 @@ __global__ void sum_vis(float *vis_arr, float *sum_vis_arr, int *N_fq_p, int *N_
 }
 
 int vis_sim(float *baseline, float *src_dir, float *src_int, float *src_index,
-            float *freqs, float *mfreqs, float *vis_arr,
-            int N_fq, int N_src){
+            float *freqs, float *mfreqs, float *vis_arr, float *beam_arr,
+            int l, int b, int N_fq, int N_src){
 	float *dev_baseline, *dev_src_dir, *dev_src_int, *dev_src_index, *dev_freqs, *dev_mfreqs,
-          *dev_vis_arr, *dev_sum_vis_arr;
+          *dev_vis_arr, *dev_sum_vis_arr, *dev_beam_arr;
     int *dev_N_fq, *dev_N_src;
+
+    cudaExtent beam_arr_size = make_cudaExtent(l, b, N_fq);
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
 	// Allocate memory on the GPU, do we need to check for success on cudaMalloc?
-	cudaMalloc((void**) &dev_baseline,  3*sizeof(float));
-	cudaMalloc((void**) &dev_src_dir,   3*N_src*sizeof(float));
-	cudaMalloc((void**) &dev_src_int,   N_src*sizeof(float));
-    cudaMalloc((void**) &dev_src_index, N_src*sizeof(float));
-	cudaMalloc((void**) &dev_freqs,     N_fq*sizeof(float));
-    cudaMalloc((void**) &dev_mfreqs,    N_src*sizeof(float));
-	cudaMalloc((void**) &dev_vis_arr,   2 * N_fq * N_src * sizeof(float));	    
+	cudaMalloc((void**) &dev_baseline,      3*sizeof(float));
+	cudaMalloc((void**) &dev_src_dir,       3*N_src*sizeof(float));
+	cudaMalloc((void**) &dev_src_int,       N_src*sizeof(float));
+    cudaMalloc((void**) &dev_src_index,     N_src*sizeof(float));
+	cudaMalloc((void**) &dev_freqs,         N_fq*sizeof(float));
+    cudaMalloc((void**) &dev_mfreqs,        N_src*sizeof(float));
+	cudaMalloc((void**) &dev_vis_arr,       2 * N_fq * N_src * sizeof(float));	    
 	cudaMalloc((void**) &dev_sum_vis_arr,   2 * N_fq * sizeof(float));	    
-    cudaMalloc((void**) &dev_N_fq,      sizeof(int));
-	cudaMalloc((void**) &dev_N_src,     sizeof(int));
+    cudaMalloc((void**) &dev_N_fq,          sizeof(int));
+	cudaMalloc((void**) &dev_N_src,         sizeof(int));
+    
+    //Allocate memory for beam_arr.  Can use a layered texture for compute capability >= 2.0 devices.
+    cudaMalloc3DArray((void**) &dev_beam_arr, &channelDesc, beam_arr_size);
 	
 	// Move the arrays onto the GPU
     cudaMemcpy(dev_baseline,  baseline,  3*sizeof(float),         
@@ -71,6 +78,21 @@ int vis_sim(float *baseline, float *src_dir, float *src_int, float *src_index,
                 cudaMemcpyHostToDevice);
     cudaMemcpy(dev_N_fq,      &N_fq,      sizeof(int),  cudaMemcpyHostToDevice);
     cudaMemcpy(dev_N_src,     &N_src,     sizeof(int), cudaMemcpyHostToDevice);
+
+    //Copy the beam_arr array onto the GPU
+    cuda Memcpy3DParams copyParams = {0};
+    copyParams.srcPtr   = make_cudaPitchedPtr((void*)beam_arr,  beam_arr_size.width*sizeof(float), beam_arr_size.height, beam_arr_size.depth);
+    copyParams.dstArray = dev_beam_arr;
+    copyParams.extent   = beam_arr_size;
+    copyParams.kind     = cudaMemcpyHOstToDevice;
+    cudaMemcpy3D(&copyParams);
+
+    //set Texture parameters
+    tex.normalized = false;
+    tex.filtermode = cudaFilterModeLinear;
+    tex.addressMode[0] = cudaAddressModeBorder;
+    tex.addressMode[1] = cudaAddressModeBorder;
+    tex.addressMode[2] = cudaAddressModeBorder;
 
     dim3 grid(N_fq,N_src);
 
@@ -92,7 +114,7 @@ int vis_sim(float *baseline, float *src_dir, float *src_int, float *src_index,
     cudaFree(dev_sum_vis_arr);
     cudaFree(dev_N_fq);
     cudaFree(dev_N_src);
-    
+    cudaFree(dev_beam_arr);
 
 	return 0;
 }
