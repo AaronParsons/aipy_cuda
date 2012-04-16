@@ -2,6 +2,8 @@
 #define _VIS_SIM_H_
 
 #include <stdio.h>
+#include <cuda.h>
+#include <cuda_runtime_api.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,7 +12,7 @@ extern "C" {
 #define  CL_M_PI_F          3.14159274101257f
 
 int vis_sim(float *, float *, float *, float *,
-            float *, float *, float *,
+            float *, float *, float *, float *,
             int, int, int, float, float, float, float, float, float, 
             int, int);
 

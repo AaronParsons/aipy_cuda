@@ -5,19 +5,19 @@
 //#include <math.h>
 #include "vis_sim.h"
 
-texture<float, 3, cudaReadModeNormalizedFloat> tex;
+texture<float, 3, cudaReadModeElementType> tex;
 
-__global__ void find_vis( float *baseline, float *src_dir, float *src_int, float *src_index, float *freqs, float* mfreqs, int *N_fq_p, int *N_src_p, float *vis_arr, float *beam_arr, float *lmin, float *lmax, float *mmin, float *mmax, float *beamfqmin, float *beamfqmax) {
+__global__ void find_vis( float *baseline, float *src_dir, float *src_int, float *src_index, float *freqs, float* mfreqs, int *N_fq_p, int *N_src_p, float *vis_arr, cudaArray *beam_arr, float *lmin_p, float *lmax_p, float *mmin_p, float *mmax_p, float *beamfqmin_p, float *beamfqmax_p) {
 	//Inputs: Baseline is length 3 vector in nanoseconds, src_dir is N_src*3 array, src_int is an N_src array, src_index is a N_src array, freqs is an N_fq array of frequencies in GHz, mfreqs is an N_src array
     //Outputs: re_part and im_part are N_fq arrays holding the computed visibility.
     int N_fq = *N_fq_p;
     int N_src = *N_src_p;
-    float lmin = *lmin;
-    float lmax = *lmax;
-    float mmin = *mmin;
-    float mmax = *mmax;
-    float beamfqmin = *beamfqmin;
-    float beamfqmax = *beamfqmax;
+    float lmin = *lmin_p;
+    float lmax = *lmax_p;
+    float mmin = *mmin_p;
+    float mmax = *mmax_p;
+    float beamfqmin = *beamfqmin_p;
+    float beamfqmax = *beamfqmax_p;
     float coeff, dot=0, fq;
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int sid = blockIdx.y * blockDim.y + threadIdx.y;
@@ -32,7 +32,8 @@ __global__ void find_vis( float *baseline, float *src_dir, float *src_int, float
            dot += src_dir[3*sid+i] * baseline[i];
     }
     dot *= -2 * CL_M_PI_F;
-    coeff = src_int[sid] * powf(fq/mfreqs[sid], src_index[sid]) * tex3D(tex, l_norm, m_norm, fq_norm);
+    float texel = tex3D(tex, l_norm, m_norm, fq_norm);
+    coeff = src_int[sid] * powf(fq/mfreqs[sid], src_index[sid]) * texel;
     vis_arr[2*(N_src*tid + sid)  ] = coeff * cosf(fq*dot);
     vis_arr[2*(N_src*tid + sid)+1] = coeff * sinf(fq*dot);
 }
@@ -55,12 +56,13 @@ int vis_sim(float *baseline, float *src_dir, float *src_int, float *src_index,
             int l, int m, int N_beam_fq, float lmin, float lmax, float mmin, float mmax,
             float beamfqmin, float beamfqmax, int N_fq, int N_src){
 	float *dev_baseline, *dev_src_dir, *dev_src_int, *dev_src_index, *dev_freqs, *dev_mfreqs,
-          *dev_vis_arr, *dev_sum_vis_arr, *dev_beam_arr, *dev_lmin, *dev_lmax,
+          *dev_vis_arr, *dev_sum_vis_arr,*dev_lmin, *dev_lmax,
           *dev_mmin, *dev_mmax, *dev_beamfqmin, *dev_beamfqmax;
     int *dev_N_fq, *dev_N_src;
-
+    cudaArray *dev_beam_arr;
     cudaExtent beam_arr_size = make_cudaExtent(l, m, N_beam_fq);
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
+
 	// Allocate memory on the GPU, do we need to check for success on cudaMalloc?
 	HANDLE_ERROR(cudaMalloc((void**) &dev_baseline,      3*sizeof(float)));
 	HANDLE_ERROR(cudaMalloc((void**) &dev_src_dir,       3*N_src*sizeof(float)));
@@ -80,7 +82,7 @@ int vis_sim(float *baseline, float *src_dir, float *src_int, float *src_index,
     HANDLE_ERROR(cudaMalloc((void**) &dev_beamfqmax,     sizeof(float)));
     
     //Allocate memory for beam_arr.  
-    HANDLE_ERROR(cudaMalloc3DArray((void**) &dev_beam_arr, &channelDesc, beam_arr_size));
+    HANDLE_ERROR(cudaMalloc3DArray(&dev_beam_arr, &channelDesc, beam_arr_size));
 	
 	// Move the arrays onto the GPU
     cudaMemcpy(dev_baseline,  baseline,  3*sizeof(float),         
@@ -105,16 +107,16 @@ int vis_sim(float *baseline, float *src_dir, float *src_int, float *src_index,
     cudaMemcpy(dev_beamfqmax, &beamfqmax, sizeof(float),  cudaMemcpyHostToDevice);
 
     //Copy the beam_arr array onto the GPU
-    cuda Memcpy3DParams copyParams = {0};
+    cudaMemcpy3DParms copyParams = {0};
     copyParams.srcPtr   = make_cudaPitchedPtr((void*)beam_arr,  beam_arr_size.width*sizeof(float), beam_arr_size.width, beam_arr_size.height);
     copyParams.dstArray = dev_beam_arr;
     copyParams.extent   = beam_arr_size;
-    copyParams.kind     = cudaMemcpyHOstToDevice;
+    copyParams.kind     = cudaMemcpyHostToDevice;
     cudaMemcpy3D(&copyParams);
 
     //set Texture parameters
     tex.normalized = true;
-    tex.filtermode = cudaFilterModeLinear;
+    tex.filterMode = cudaFilterModeLinear;
     tex.addressMode[0] = cudaAddressModeBorder;
     tex.addressMode[1] = cudaAddressModeBorder;
     tex.addressMode[2] = cudaAddressModeBorder;
@@ -144,7 +146,7 @@ int vis_sim(float *baseline, float *src_dir, float *src_int, float *src_index,
     cudaFree(dev_sum_vis_arr);
     cudaFree(dev_N_fq);
     cudaFree(dev_N_src);
-    cudaFree(dev_beam_arr);
+    cudaFreeArray(dev_beam_arr);
     cudaFree(dev_lmin);
     cudaFree(dev_lmax);
     cudaFree(dev_mmin);

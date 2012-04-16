@@ -6,17 +6,18 @@
 PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
 	PyArrayObject *baseline, *src_dir, *src_int, *src_index, *freqs, *mfreqs, *beam_arr;
 	PyArrayObject *vis_array;
-	npy_intp N_fq, N_src, d0, d1, l, m;
+	npy_intp N_fq, N_src, d0, d1, N_beam_fq, l, m;
     npy_float lmin, lmax, mmin, mmax, beamfqmin, beamfqmax;
 
-	if(!PyArg_ParseTuple(args, "O!O!O!O!O!O!O!ffffff", &PyArray_Type, &baseline, 
+	if(!PyArg_ParseTuple(args, "O!O!O!O!O!O!O!ffffff",   &PyArray_Type, &baseline, 
                                                          &PyArray_Type, &src_dir, 
                                                          &PyArray_Type, &src_int,
                                                          &PyArray_Type, &src_index,
                              						     &PyArray_Type, &freqs,
                                                          &PyArray_Type, &mfreqs,
                                                          &PyArray_Type, &beam_arr, 
-                                                         lmin, lmax, mmin, mmax, beamfqmin, beamfqmax)){
+                                                         &lmin, &lmax, &mmin, &mmax, 
+                                                         &beamfqmin, &beamfqmax)){
 	return NULL;
 	}
 
