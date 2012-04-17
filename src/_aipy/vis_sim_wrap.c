@@ -63,9 +63,9 @@ PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
         return NULL;
         }
     else{
-        l         = PyArray_DIM(src_dir, 0);
-        m         = PyArray_DIM(src_dir, 0);
-        N_beam_fq = PyArray_DIM(src_dir, 0);
+        l         = PyArray_DIM(beam_arr, 0);
+        m         = PyArray_DIM(beam_arr, 1);
+        N_beam_fq = PyArray_DIM(beam_arr, 2);
         }
     //XXX Check the type of the arrays
 	vis_array     = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(freqs),    PyArray_DIMS(freqs),    NPY_CFLOAT);
