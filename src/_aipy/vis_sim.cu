@@ -117,9 +117,9 @@ int vis_sim(float *baseline, float *src_dir, float *src_int, float *src_index,
     //set Texture parameters
     tex.normalized = true;
     tex.filterMode = cudaFilterModeLinear;
-    tex.addressMode[0] = cudaAddressModeBorder;
-    tex.addressMode[1] = cudaAddressModeBorder;
-    tex.addressMode[2] = cudaAddressModeBorder;
+    tex.addressMode[0] = cudaAddressModeClamp; // XXX should maybe make this Border to set out-of-range vals to 0
+    tex.addressMode[1] = cudaAddressModeClamp; // XXX should maybe make this Border to set out-of-range vals to 0
+    tex.addressMode[2] = cudaAddressModeClamp;
     
 
     //bind array to texture
