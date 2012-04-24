@@ -63,7 +63,7 @@ int vis_sim(float *baseline, float *src_dir, float *src_int, float *src_index,
     cudaExtent beam_arr_size = make_cudaExtent(l, m, N_beam_fq);
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
 
-	// Allocate memory on the GPU, do we need to check for success on cudaMalloc?
+	// Allocate memory on the GPU
 	HANDLE_ERROR(cudaMalloc((void**) &dev_baseline,      3*sizeof(float)));
 	HANDLE_ERROR(cudaMalloc((void**) &dev_src_dir,       3*N_src*sizeof(float)));
 	HANDLE_ERROR(cudaMalloc((void**) &dev_src_int,       N_src*sizeof(float)));

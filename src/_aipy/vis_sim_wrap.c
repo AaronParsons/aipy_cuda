@@ -67,7 +67,14 @@ PyObject *wrap_vis_sim(PyObject *self, PyObject *args){
         m         = PyArray_DIM(beam_arr, 1);
         N_beam_fq = PyArray_DIM(beam_arr, 2);
         }
-    //XXX Check the type of the arrays
+
+    //Check the type of the array inputs
+    if (! (PyArray_ISFLOAT((PyObject *) baseline) && (PyArray_ISFLOAT((PyObject *) src_dir)) && (PyArray_ISFLOAT((PyObject *) src_int)) && (PyArray_ISFLOAT((PyObject *) src_index)) && (PyArray_ISFLOAT((PyObject *) freqs)) && (PyArray_ISFLOAT((PyObject *) mfreqs)) && (PyArray_ISFLOAT((PyObject *) beam_arr)))){
+        PyErr_Format(PyExc_ValueError, "All arrays must be of floats");
+        return NULL;
+    }
+
+    //Create the array to hold the output
 	vis_array     = (PyArrayObject *) PyArray_SimpleNew(PyArray_NDIM(freqs),    PyArray_DIMS(freqs),    NPY_CFLOAT);
 
 	vis_sim(
