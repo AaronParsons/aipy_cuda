@@ -22,11 +22,20 @@ class Test_Aipy(unittest.TestCase):
         self.src_index = n.array([0., 0], dtype=n.float32)
         self.freqs = n.linspace(.1,.2, self.NFREQ).astype(n.float32)
         self.mfreqs = n.array([.150] * 2, dtype=n.float32)
-        self.beam_arr = n.ones((100,100,100), dtype=n.float32)
+        self.beam_arr = n.ones((100,100,10), dtype=n.float32)
         self.lmin, self.lmax = (-1,1)
         self.mmin, self.mmax = (-1,1)
         self.beamfqmin, self.beamfqmax = (.100, .200) # GHz
         self.vis = vis_sim(self.baseline, self.src_dir[:1], self.src_int[:1], self.src_index[:1], self.freqs, self.mfreqs[:1])
+    def test_beam_arr_type(self):
+        beam_arr = n.ones((100,100), dtype=n.float32)
+        self.assertRaises(ValueError, a.vis_sim,
+           self.baseline, self.src_dir, self.src_int, self.src_index, self.freqs, self.mfreqs,
+                beam_arr, self.lmin, self.lmax, self.mmin, self.mmax, self.beamfqmin, self.beamfqmax)
+        beam_arr = n.ones((100,100,10), dtype=n.int)
+        self.assertRaises(ValueError, a.vis_sim,
+           self.baseline, self.src_dir, self.src_int, self.src_index, self.freqs, self.mfreqs,
+                beam_arr, self.lmin, self.lmax, self.mmin, self.mmax, self.beamfqmin, self.beamfqmax)
     def test_vis_sim_return(self):
         vis = a.vis_sim(self.baseline, self.src_dir, self.src_int, self.src_index, self.freqs, self.mfreqs,
             self.beam_arr, self.lmin, self.lmax, self.mmin, self.mmax, self.beamfqmin, self.beamfqmax)
